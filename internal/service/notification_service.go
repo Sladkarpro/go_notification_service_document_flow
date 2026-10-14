@@ -203,12 +203,15 @@ func normalizeLink(raw *string) *string {
 	}
 
 	u, err := url.Parse(s)
-	if err != nil || !strings.HasPrefix(u.Path, "/") || strings.HasPrefix(u.Path, "//") {
+	// Браузер читает «/\host» и «/<tab>/host» как адрес чужого сайта, поэтому
+	// такие пути отбрасываем, а наружу отдаём путь в исходном экранировании.
+	if err != nil || !strings.HasPrefix(u.Path, "/") || strings.HasPrefix(u.Path, "//") ||
+		strings.ContainsAny(u.Path, "\\\t\r\n") {
 		slog.Warn("ссылка события отброшена: ожидался путь внутри портала", "link", s)
 		return nil
 	}
 
-	path := u.Path
+	path := u.EscapedPath()
 	if u.RawQuery != "" {
 		path += "?" + u.RawQuery
 	}
