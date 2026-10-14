@@ -84,7 +84,10 @@ func decodePushSubscription(w http.ResponseWriter, r *http.Request) (repository.
 		P256dh:   strings.TrimSpace(body.P256dh),
 		Auth:     strings.TrimSpace(body.Auth),
 	}
-	if !validPushEndpoint(sub.Endpoint) || !validPushKey(sub.P256dh) || !validPushKey(sub.Auth) {
+	if !validPushKey(sub.P256dh) || !validPushKey(sub.Auth) {
+		return repository.PushSubscription{}, apperr.ErrValidation
+	}
+	if _, err := helper.ResolvePushEndpoint(r.Context(), sub.Endpoint); err != nil {
 		return repository.PushSubscription{}, apperr.ErrValidation
 	}
 	return sub, nil

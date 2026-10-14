@@ -203,7 +203,7 @@ func normalizeLink(raw *string) *string {
 	}
 
 	u, err := url.Parse(s)
-	if err != nil || !strings.HasPrefix(u.Path, "/") {
+	if err != nil || !strings.HasPrefix(u.Path, "/") || strings.HasPrefix(u.Path, "//") {
 		slog.Warn("ссылка события отброшена: ожидался путь внутри портала", "link", s)
 		return nil
 	}
