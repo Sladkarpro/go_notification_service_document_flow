@@ -203,12 +203,17 @@ func normalizeLink(raw *string) *string {
 	}
 
 	u, err := url.Parse(s)
-	if err != nil || !strings.HasPrefix(u.Path, "/") {
+	path := ""
+	if err == nil {
+		// Path уже декодирован: %2f, %5c и %09 могут стать внешним URL
+		// при разборе браузером. Сохраняем экранирование пути.
+		path = u.EscapedPath()
+	}
+	if !strings.HasPrefix(path, "/") || strings.HasPrefix(path, "//") {
 		slog.Warn("ссылка события отброшена: ожидался путь внутри портала", "link", s)
 		return nil
 	}
 
-	path := u.Path
 	if u.RawQuery != "" {
 		path += "?" + u.RawQuery
 	}
