@@ -192,6 +192,18 @@ func uniqueRecipients(ids []int64) []int64 {
 // Прежняя версия ещё и переписывала легаси-адреса монолита (/kanban_board/12,
 // /document_view/45) в маршруты SPA. Это больше не нужно: продюсеры общего
 // контракта присылают готовый маршрут, а монолитные источники уходят.
+// hasDotSegment — есть ли в декодированном пути сегмент «.» или «..».
+// Браузер схлопывает их: «/a/..//evil.example» и «/%2e//evil.example»
+// становятся «//evil.example», то есть адресом чужого сайта.
+func hasDotSegment(path string) bool {
+	for _, seg := range strings.Split(path, "/") {
+		if seg == "." || seg == ".." {
+			return true
+		}
+	}
+	return false
+}
+
 func normalizeLink(raw *string) *string {
 	if raw == nil {
 		return nil
@@ -209,7 +221,7 @@ func normalizeLink(raw *string) *string {
 		// при разборе браузером. Сохраняем экранирование пути.
 		path = u.EscapedPath()
 	}
-	if !strings.HasPrefix(path, "/") || strings.HasPrefix(path, "//") {
+	if !strings.HasPrefix(path, "/") || strings.HasPrefix(path, "//") || hasDotSegment(u.Path) {
 		slog.Warn("ссылка события отброшена: ожидался путь внутри портала", "link", s)
 		return nil
 	}
