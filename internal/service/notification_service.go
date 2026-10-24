@@ -9,6 +9,8 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/jackc/pgx/v5/pgtype"
+
 	"notification_service_document_flow/internal/helper"
 	"notification_service_document_flow/internal/messaging/events"
 	"notification_service_document_flow/internal/model"
@@ -149,6 +151,10 @@ func typeFromRoutingKey(routingKey string) (string, error) {
 func validateEvent(evt events.NotificationEvent) error {
 	if strings.TrimSpace(evt.EventID) == "" {
 		return fmt.Errorf("%w: пустой eventId", ErrInvalidEvent)
+	}
+	var eventID pgtype.UUID
+	if err := eventID.Scan(evt.EventID); err != nil {
+		return fmt.Errorf("%w: eventId %q: %v", ErrInvalidEvent, evt.EventID, err)
 	}
 	if strings.TrimSpace(evt.Title) == "" {
 		return fmt.Errorf("%w: пустой title (event_id %s)", ErrInvalidEvent, evt.EventID)
